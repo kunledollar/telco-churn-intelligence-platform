@@ -1,0 +1,28 @@
+2025-12-01 02:39:46,309 - dashboard - INFO - ✅ Streamlit dashboard started successfully
+2025-12-01 02:39:46,502 - dashboard - INFO - 📥 Loading raw data from: /app/data/Telco-Customer-Churn.csv
+2025-12-01 02:39:46,531 - dashboard - INFO - 📊 Raw data loaded successfully
+2025-12-01 02:39:46,539 - dashboard - INFO - 🔍 Attempting to load churn model from: /app/models/best_churn_model.joblib
+2025-12-01 02:39:46,542 - dashboard - INFO - ✅ Churn model loaded successfully
+2025-12-01 02:39:46,564 - dashboard - INFO - 📊 Computed base aggregates successfully
+2025-12-01 02:47:37,077 - dashboard - INFO - ✅ Streamlit dashboard started successfully
+2025-12-01 02:47:37,274 - dashboard - INFO - 📥 Loading raw data from: /app/data/Telco-Customer-Churn.csv
+2025-12-01 02:47:37,305 - dashboard - INFO - 📊 Raw data loaded successfully
+2025-12-01 02:47:37,313 - dashboard - INFO - 🔍 Attempting to load churn model from: /app/models/best_churn_model.joblib
+2025-12-01 02:47:37,317 - dashboard - INFO - ✅ Churn model loaded successfully
+2025-12-01 02:47:37,340 - dashboard - INFO - 📊 Computed base aggregates successfully
+2025-12-01 02:49:46,425 - dashboard - INFO - ✅ Streamlit dashboard started successfully
+2025-12-01 02:49:46,620 - dashboard - INFO - 📥 Loading raw data from: /app/data/Telco-Customer-Churn.csv
+2025-12-01 02:49:46,649 - dashboard - INFO - 📊 Raw data loaded successfully
+2025-12-01 02:49:46,658 - dashboard - INFO - 🔍 Attempting to load churn model from: /app/models/best_churn_model.joblib
+2025-12-01 02:49:46,661 - dashboard - INFO - ✅ Churn model loaded successfully
+2025-12-01 02:49:46,683 - dashboard - INFO - 📊 Computed base aggregates successfully
+2025-12-01 03:21:20,046 - dashboard - INFO - ✅ Streamlit dashboard started successfully
+2025-12-01 03:21:20,272 - dashboard - INFO - 📥 Loading raw data from: /app/data/Telco-Customer-Churn.csv
+2025-12-01 03:21:20,301 - dashboard - INFO - 📊 Raw data loaded successfully
+2025-12-01 03:21:20,309 - dashboard - INFO - 🔍 Attempting to load churn model from: /app/models/best_churn_model.joblib
+2025-12-01 03:21:20,311 - dashboard - INFO - ✅ Churn model loaded successfully
+2025-12-01 03:21:20,334 - dashboard - INFO - 📊 Computed base aggregates successfully
+2025-12-01 06:22:00,671 - api - INFO - 📊 Prometheus metrics enabled at /metrics
+2025-12-01 06:23:20,740 - api - INFO - 📊 Prometheus metrics enabled at /metrics
+2025-12-01 06:44:37,601 - api - INFO - 📊 Prometheus metrics enabled at /metrics
+2025-12-01 06:58:10,702 - api - INFO - 📊 Prometheus metrics enabled at /metrics

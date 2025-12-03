@@ -1,0 +1,17 @@
+seaborn
+plotly
+reportlab
+pandas
+numpy
+scikit-learn
+xgboost
+lightgbm
+catboost
+shap
+matplotlib
+fastapi
+uvicorn[standard]
+pydantic
+streamlit
+joblib
+openpyxl

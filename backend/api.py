@@ -1,0 +1,110 @@
+
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from backend.model import predict_single, predict_batch
+from backend.model import load_model
+from backend.logging_config import get_logger
+from prometheus_fastapi_instrumentator import Instrumentator
+
+import pandas as pd
+from backend.logging_config import get_logger
+
+logger = get_logger()
+
+
+#logger = get_logger("api")
+
+# -------------------------------------------------------
+# Create FastAPI app
+# -------------------------------------------------------
+app = FastAPI(
+    title="Churn Prediction API",
+    description="FastAPI backend for Telco Churn ML model",
+    version="1.0.0"
+)
+
+# -------------------------------------------------------
+# CORS (allow dashboard.kunledollar.com)
+# -------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],   # you can restrict later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# -------------------------------------------------------
+# PROMETHEUS METRICS (must run BEFORE startup)
+# -------------------------------------------------------
+instrumentator = Instrumentator().instrument(app)
+
+@app.on_event("startup")
+async def _startup():
+    instrumentator.expose(app)
+    logger.info("📊 Prometheus metrics enabled at /metrics")
+    load_model()  # warm model at startup
+
+
+# ------------------------------------------------------
+# 1. ENABLE PROMETHEUS METRICS BEFORE APP STARTS
+# ------------------------------------------------------
+#Instrumentator().instrument(app).expose(app)
+
+# ------------------------------------------------------
+# 2. REQUEST MODELS
+# ------------------------------------------------------
+
+class 	SingleCustomer(BaseModel):
+    gender: str
+    SeniorCitizen: int
+    Partner: str
+    Dependents: str
+    tenure: int
+    PhoneService: str
+    MultipleLines: str
+    InternetService: str
+    OnlineSecurity: str
+    OnlineBackup: str
+    DeviceProtection: str
+    TechSupport: str
+    StreamingTV: str
+    StreamingMovies: str
+    PaperlessBilling: str
+    PaymentMethod: str
+    MonthlyCharges: float
+    TotalCharges: float
+
+# ------------------------------------------------------
+# 3. ENDPOINTS
+# ------------------------------------------------------
+@app.get("/")
+def root():
+    return {"status": "API is running"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+@app.post("/predict")
+def predict(customer: SingleCustomer):
+    logger.info("Received prediction request")
+
+    df = pd.DataFrame([customer.dict()])
+
+    churn, proba = predict_single(model, df)
+
+    logger.info(f"Prediction result → churn={churn}, probability={proba}")
+
+    return {
+        "churn_prediction": churn,
+        "probability": proba
+    }
+
+@app.post("/predict_batch")
+def predict_batch_api(data: list[dict]):
+    df = pd.DataFrame(data)
+    result = predict_batch(df)
+    logger.info("Batch prediction processed")
+    return result

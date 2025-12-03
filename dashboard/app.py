@@ -1,0 +1,676 @@
+import sys
+from pathlib import Path
+from io import BytesIO
+from backend.logging_config import get_logger
+
+import joblib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+import shap
+import streamlit as st
+from reportlab.pdfgen import canvas
+from sklearn.cluster import KMeans
+import plotly.express as px
+import plotly.graph_objects as go
+
+logger = get_logger("dashboard")
+logger.info("✅ Streamlit dashboard started successfully")
+
+# -------------------------------------------------
+# PATHS & PYTHONPATH
+# -------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+BACKEND_ROOT = PROJECT_ROOT / "backend"
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from backend.preprocessing import (
+    add_feature_engineering,
+    basic_cleaning,
+    encode_target,
+)
+
+# Paths to model, data and assets
+MODEL_PATH = PROJECT_ROOT / "models" / "best_churn_model.joblib"
+DATA_PATH = PROJECT_ROOT / "data" / "Telco-Customer-Churn.csv"
+PHOTO_PATH = PROJECT_ROOT / "dashboard" / "assets" / "profile.jpg"
+SAMPLE_CSV = PROJECT_ROOT / "dashboard" / "assets" / "sample_churn.csv"
+
+# ---------------------------------------
+# BRANDING — PAGE CONFIG
+# ---------------------------------------
+st.set_page_config(
+    page_title="Akeem Asiru — Telco Customer Churn Intelligence Platform (CCIP)",
+    page_icon="📊",
+    layout="wide",
+)
+
+PRIMARY_COLOR = "#2C3E50"
+ACCENT_COLOR = "#1ABC9C"
+TEXT_COLOR = "#ECF0F1"
+
+st.markdown(
+    f"""
+    <style>
+        .reportview-container {{
+            background-color: #F6F8FA;
+        }}
+        .sidebar .sidebar-content {{
+            background-color: #2C3E50;
+        }}
+        .sidebar .sidebar-content h2, .sidebar .sidebar-content h3, .sidebar .sidebar-content p {{
+            color: #ECF0F1 !important;
+        }}
+        .metric {{
+            color: #2C3E50 !important;
+        }}
+        .footer {{
+            font-size: 14px;
+            color: #7F8C8D;
+            text-align: center;
+            padding: 10px;
+            margin-top: 50px;
+        }}
+        .name-badge {{
+            font-size: 18px;
+            font-weight: bold;
+            color: #1ABC9C;
+        }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# ---------------------------------------
+# LOAD DATA & MODEL (WITH LOGGING)
+# ---------------------------------------
+
+@st.cache_data
+def load_raw_data():
+    try:
+        logger.info(f"📥 Loading raw data from: {DATA_PATH}")
+        df = pd.read_csv(DATA_PATH)
+        df.columns = df.columns.str.strip()
+        logger.info("📊 Raw data loaded successfully")
+        return df
+    except Exception as e:
+        logger.exception(f"❌ Error loading raw data: {e}")
+        st.error("Could not load raw dataset.")
+        return pd.DataFrame()
+
+@st.cache_resource
+def load_model():
+    try:
+        logger.info(f"🔍 Attempting to load churn model from: {MODEL_PATH}")
+        model = joblib.load(MODEL_PATH)
+        logger.info("✅ Churn model loaded successfully")
+        return model
+    except Exception as e:
+        logger.exception(f"❌ Failed to load churn model: {e}")
+        st.error("Error loading churn model. Please contact the administrator.")
+        return None
+
+@st.cache_data
+def compute_base_aggregates(df: pd.DataFrame):
+    try:
+        churn_rate = (df["Churn"] == "Yes").mean() if "Churn" in df.columns else 0
+        n_customers = len(df)
+        monthly_revenue = df["MonthlyCharges"].sum()
+        logger.info("📊 Computed base aggregates successfully")
+        return churn_rate, n_customers, monthly_revenue
+    except Exception as e:
+        logger.exception(f"❌ Failed to compute base aggregates: {e}")
+        return 0, 0, 0
+
+df = load_raw_data()
+model = load_model()
+churn_rate, n_customers, monthly_revenue = compute_base_aggregates(df)
+
+# ---------------------------------------
+# HEADER — NAME + BRANDING
+# ---------------------------------------
+st.markdown(
+    f"""
+    <div style="padding:10px 0 5px 0;">
+        <h1 style="color:{PRIMARY_COLOR}; font-size:42px; margin-bottom:0;">
+            📊 Telco Customer Churn Intelligence Platform (CCIP)
+        </h1>
+        <p style="color:#34495E; font-size:20px; margin-top:0;">
+            Built by <span class="name-badge">Akeem Asiru</span>
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# -------------------------------------------------
+# SIDEBAR — FINAL PROFESSIONAL VERSION
+# -------------------------------------------------
+
+with st.sidebar:
+    # Profile picture container
+    st.markdown('<div class="sidebar-profile">', unsafe_allow_html=True)
+    st.image(str(PHOTO_PATH))
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Name & title
+    st.markdown("### **Akeem Asiru**")
+    st.markdown("Machine Learning Engineer")
+    st.markdown("Building enterprise AI systems, dashboards, and ML APIs.")
+    st.markdown("---")
+
+    # NAVIGATION HEADER
+    st.markdown("### 📁 Navigation")
+
+    # Social Buttons
+    st.markdown(
+        """
+        <style>
+        .social-btn {
+            display: flex;
+            align-items: center;
+            background-color: #1ABC9C;
+            padding: 8px 12px;
+            color: white !important;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            text-decoration: none !important;
+        }
+        .social-btn:hover {
+            background-color: #16A085 !important;
+            text-decoration: none !important;
+            color: white !important;
+        }
+        .social-btn img {
+            width: 16px !important;
+            height: 16px !important;
+            margin-right: 8px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # LinkedIn button
+    st.markdown(
+        """
+        <a class="social-btn" href="https://www.linkedin.com/in/asiru-akeem-61252236b/" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png">
+            LinkedIn
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # GitHub button
+    st.markdown(
+        """
+        <a class="social-btn" href="https://github.com/kunledollar" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/25/25231.png">
+            GitHub
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# -------------------------------------------------
+# FINAL SAFE TOP SPACING FIX — GUARANTEED NO CUT-OFF
+# -------------------------------------------------
+st.markdown("""
+<style>
+
+    /* MAIN container padding (safe adjustment) */
+    .block-container {
+        padding-top: 2rem !important;      /* ensure title is visible */
+        padding-bottom: 0rem !important;
+        margin-top: -1rem !important;      /* gently pull content upward */
+    }
+
+    /* Reduce padding in main app wrapper (Streamlit 1.32+) */
+    .main > div {
+        padding-top: 0rem !important;
+        margin-top: -0.5rem !important;
+    }
+
+    /* Title spacing — keep safe space above */
+    h1 {
+        margin-top: 0.2rem !important;
+        padding-top: 0.5rem !important;
+    }
+
+    /* Tabs container spacing */
+    div[data-testid="stTabs"] {
+        margin-top: -0.8rem !important;
+        padding-top: 0rem !important;
+    }
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ---------------------------------------
+# TABS
+# ---------------------------------------
+tab_overview, tab_segment, tab_predict, tab_shap, tab_roi, tab_batch = st.tabs(
+    [
+        "📈 Overview",
+        "📊 Segment Risk",
+        "🧍 Customer Prediction",
+        "🧠 SHAP Explainability",
+        "💰 ROI Calculator",
+        "📂 Batch Prediction",
+    ]
+)
+
+
+# ---------------------------------------
+# TAB 1 — OVERVIEW (EXECUTIVE DASHBOARD)
+# ---------------------------------------
+with tab_overview:
+    st.subheader("Overview")
+
+    # ---------------------------
+    # KPIs
+    # ---------------------------
+    col_m1, col_m2, col_m3 = st.columns(3)
+    col_m1.metric("Overall Churn Rate", f"{churn_rate * 100:.1f}%")
+    col_m2.metric("Total Customers", f"{n_customers:,}")
+    col_m3.metric("Monthly Revenue", f"${monthly_revenue:,.0f}")
+
+    # ------------------------------------------------------
+    # EXECUTIVE CHURN SUMMARY TABLE + COLOR-CODED INSIGHTS
+    # ------------------------------------------------------
+    st.markdown("### 📊 Executive Churn Summary Table")
+
+    summary_data = {
+        "Segment": ["Overall", "New (0–3 months)", "Long-Term (12+ months)"],
+        "Customers at Start": [
+            len(df),
+            len(df[df["tenure"] <= 3]),
+            len(df[df["tenure"] >= 12]),
+        ],
+        "Customers Lost": [
+            (df["Churn"] == "Yes").sum(),
+            (df[(df["tenure"] <= 3) & (df["Churn"] == "Yes")]).shape[0],
+            (df[(df["tenure"] >= 12) & (df["Churn"] == "Yes")]).shape[0],
+        ],
+    }
+
+    summary_df = pd.DataFrame(summary_data)
+
+    summary_df["Churn Rate (%)"] = (
+        summary_df["Customers Lost"] / summary_df["Customers at Start"] * 100
+    ).round(1)
+
+    summary_df["Retention Rate (%)"] = 100 - summary_df["Churn Rate (%)"]
+
+    def insight_color(rate):
+        if rate > 20:
+            return "🔴 High churn — urgent action"
+        elif rate > 10:
+            return "🟡 Moderate — investigate"
+        else:
+            return "🟢 Healthy"
+
+    summary_df["Key Insight"] = summary_df["Churn Rate (%)"].apply(insight_color)
+
+    st.dataframe(summary_df, use_container_width=True)
+
+    # ------------------------------
+    # DOWNLOAD SUMMARY CSV
+    # ------------------------------
+    csv_summary = summary_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Download Churn Summary (CSV)",
+        data=csv_summary,
+        file_name="churn_summary.csv",
+        mime="text/csv",
+    )
+
+    # ------------------------------
+    # DOWNLOAD SUMMARY PDF
+    # ------------------------------
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+    from reportlab.lib import colors
+
+    def create_summary_pdf(df):
+        buffer = BytesIO()
+        pdf = SimpleDocTemplate(buffer)
+
+        table = Table([df.columns.tolist()] + df.values.tolist())
+        table.setStyle(
+            TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2C3E50")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ])
+        )
+
+        pdf.build([table])
+        buffer.seek(0)
+        return buffer
+
+    pdf_summary = create_summary_pdf(summary_df)
+
+    st.download_button(
+        label="📄 Download Executive Summary (PDF)",
+        data=pdf_summary,
+        file_name="churn_summary.pdf",
+        mime="application/pdf",
+    )
+
+    # ---------------------------------
+    st.markdown("---")
+    st.subheader("🔥 Predicted Churn Rate — Top 10 At-Risk Customers")
+
+    # LOAD SAMPLE & RUN BATCH PREDICTION
+    from batch_predict import run_batch_prediction
+    df_sample = pd.read_csv(SAMPLE_CSV)
+    results = run_batch_prediction(df_sample)
+    results["risk_label"] = np.where(results["churn_probability"] >= 0.5, "High Risk", "Low Risk")
+
+    # ---------------------------------
+    # TOP 10 GAUGE CHART
+    # ---------------------------------
+    top10 = results.sort_values("churn_probability", ascending=False).head(10)
+    churn_rate_pred = top10["churn_probability"].mean() * 100
+
+    gauge = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=churn_rate_pred,
+            title={"text": "Average Churn Risk (Top 10 Customers)"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "red"},
+                "steps": [
+                    {"range": [0, 40], "color": "lightgreen"},
+                    {"range": [40, 65], "color": "yellow"},
+                    {"range": [65, 100], "color": "red"},
+                ],
+            },
+        )
+    )
+    st.plotly_chart(gauge, use_container_width=True)
+
+    # ---------------------------------
+    # K-MEANS CUSTOMER CLUSTERING
+    # ---------------------------------
+    st.subheader("📌 Customer Segmentation (K-Means)")
+
+    numeric_features = results[["tenure", "MonthlyCharges"]].fillna(0)
+    kmeans = KMeans(n_clusters=4, random_state=42)
+    results["cluster"] = kmeans.fit_predict(numeric_features)
+
+    fig_cluster = px.scatter(
+        results,
+        x="tenure",
+        y="MonthlyCharges",
+        color="cluster",
+        size="churn_probability",
+        hover_data=["risk_label"],
+        title="Customer Clusters",
+    )
+    st.plotly_chart(fig_cluster, use_container_width=True)
+
+    # ---------------------------------
+    # PDF REPORT FOR TOP-RISK CUSTOMER
+    # ---------------------------------
+    st.subheader("📄 PDF Report for Top-Risk Customer")
+
+    top_customer = results.sort_values("churn_probability", ascending=False).iloc[0]
+
+    def generate_pdf(data: dict):
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(80, 800, "Customer Churn Risk Report")
+        c.setFont("Helvetica", 12)
+        y = 770
+        for k, v in data.items():
+            c.drawString(80, y, f"{k}: {v}")
+            y -= 18
+        c.save()
+        buffer.seek(0)
+        return buffer
+
+    pdf_file = generate_pdf(top_customer.to_dict())
+    st.download_button(
+        label="📥 Download Customer PDF",
+        data=pdf_file,
+        file_name="top_customer_report.pdf",
+        mime="application/pdf",
+    )
+
+
+
+# ---------------------------------------
+# TAB 2 — SEGMENT RISK (NO VISUALS)
+# ---------------------------------------
+with tab_segment:
+    st.subheader("High-Risk Segments (Tabular Only)")
+    seg = (
+        df.groupby(["Contract", "PaymentMethod"])["Churn"]
+        .apply(lambda x: (x == "Yes").mean())
+        .reset_index(name="churn_rate")
+    )
+    st.dataframe(seg.sort_values("churn_rate", ascending=False))
+
+# ---------------------------------------
+# TAB 3 — SINGLE CUSTOMER PREDICTION
+# ---------------------------------------
+with tab_predict:
+    st.subheader("Single Customer Prediction")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        gender = st.selectbox("Gender", ["Male", "Female"])
+        senior = st.selectbox("Senior Citizen", [0, 1])
+        partner = st.selectbox("Partner", ["Yes", "No"])
+        dependents = st.selectbox("Dependents", ["Yes", "No"])
+        tenure = st.number_input("Tenure", 0, 72)
+        phone_service = st.selectbox("Phone Service", ["Yes", "No"])
+        multiple_lines = st.selectbox("Multiple Lines", ["No phone service", "No", "Yes"])
+
+    with col2:
+        internet_service = st.selectbox("Internet Service", ["DSL", "Fiber optic", "No"])
+        online_security = st.selectbox("Online Security", ["No internet service", "No", "Yes"])
+        online_backup = st.selectbox("Online Backup", ["No internet service", "No", "Yes"])
+        device_protection = st.selectbox("Device Protection", ["No internet service", "No", "Yes"])
+        tech_support = st.selectbox("Tech Support", ["No internet service", "No", "Yes"])
+        streaming_tv = st.selectbox("Streaming TV", ["No internet service", "No", "Yes"])
+        streaming_movies = st.selectbox("Streaming Movies", ["No internet service", "No", "Yes"])
+        contract = st.selectbox("Contract", ["Month-to-month", "One year", "Two year"])
+        paperless = st.selectbox("Paperless Billing", ["Yes", "No"])
+        payment = st.selectbox(
+            "Payment Method",
+            [
+                "Electronic check",
+                "Mailed check",
+                "Bank transfer (automatic)",
+                "Credit card (automatic)",
+            ],
+        )
+        monthly = st.number_input("Monthly Charges", 0.0, 200.0)
+        total = st.number_input("Total Charges", 0.0, 10000.0)
+
+    if st.button("Predict"):
+        row = {
+            "gender": gender,
+            "SeniorCitizen": senior,
+            "Partner": partner,
+            "Dependents": dependents,
+            "tenure": tenure,
+            "PhoneService": phone_service,
+            "MultipleLines": multiple_lines,
+            "InternetService": internet_service,
+            "OnlineSecurity": online_security,
+            "OnlineBackup": online_backup,
+            "DeviceProtection": device_protection,
+            "TechSupport": tech_support,
+            "StreamingTV": streaming_tv,
+            "StreamingMovies": streaming_movies,
+            "Contract": contract,
+            "PaperlessBilling": paperless,
+            "PaymentMethod": payment,
+            "MonthlyCharges": monthly,
+            "TotalCharges": total,
+        }
+        X_new = pd.DataFrame([row])
+        X_new_fe = add_feature_engineering(X_new)
+        proba = model.predict_proba(X_new_fe)[0, 1]
+        label = proba >= 0.5
+
+        st.metric("Churn Probability", f"{proba * 100:.1f}%")
+        st.write("Prediction:", "🔥 High Risk" if label else "✅ Low Risk")
+
+# ---------------------------------------
+# TAB 4 — SHAP EXPLAINABILITY (ONLY SHAP)
+# ---------------------------------------
+with tab_shap:
+    st.subheader("🧠 Model Explainability (SHAP)")
+    st.write("This explains what features drive the model's predictions.")
+
+    try:
+        df_clean = basic_cleaning(df)
+        X, _ = encode_target(df_clean)
+        X_fe = add_feature_engineering(X)
+
+        sample = X_fe.sample(300, random_state=42)
+        preprocess = model.named_steps["preprocess"]
+        base_model = model.named_steps["model"]
+        X_trans = preprocess.transform(sample)
+
+        model_name = base_model.__class__.__name__
+        tree_models = [
+            "RandomForestClassifier", "XGBClassifier",
+            "LGBMClassifier", "CatBoostClassifier",
+            "GradientBoostingClassifier", "ExtraTreesClassifier"
+        ]
+
+        if model_name in tree_models:
+            explainer = shap.TreeExplainer(base_model)
+            shap_vals = explainer.shap_values(X_trans)
+            if isinstance(shap_vals, list):
+                shap_vals = shap_vals[1]
+        else:
+            explainer = shap.LinearExplainer(base_model, X_trans)
+            shap_vals = explainer.shap_values(X_trans)
+
+        st.write("### Global SHAP Importance")
+        fig, ax = plt.subplots(figsize=(10, 6))
+        shap.summary_plot(
+            shap_vals,
+            X_trans,
+            feature_names=preprocess.get_feature_names_out(),
+            show=False,
+        )
+        st.pyplot(fig)
+
+    except Exception as e:
+        st.error(f"SHAP could not be computed: {e}")
+
+# ---------------------------------------
+# TAB 5 — ROI CALCULATOR
+# ---------------------------------------
+with tab_roi:
+    st.subheader("💰 ROI Calculator — Retention Campaign Impact")
+
+    arpu = st.number_input("Average Revenue Per User (Monthly)", 0.0, value=70.0)
+    churn_reduction = st.slider("Target Churn Reduction (%)", 1, 50, 5)
+    success_rate = st.slider("Retention Campaign Success Rate (%)", 10, 100, 50)
+    cost_per_user = st.number_input("Cost per Retained Customer ($)", 0.0, value=25.0)
+
+    if st.button("Calculate ROI"):
+        base_churners = churn_rate * n_customers
+        reduced_churners = base_churners * (churn_reduction / 100)
+        retained_customers = reduced_churners * (success_rate / 100)
+
+        revenue_saved = retained_customers * arpu * 12
+        campaign_cost = retained_customers * cost_per_user
+        net_gain = revenue_saved - campaign_cost
+
+        st.metric("Net Revenue Saved (per year)", f"${net_gain:,.0f}")
+        st.metric("Campaign Cost (per year)", f"${campaign_cost:,.0f}")
+        st.metric("Customers Retained", f"{retained_customers:,.0f}")
+
+# -------------------------------------------------
+# TAB 6 — AUTO & MANUAL BATCH PREDICTION
+# -------------------------------------------------
+with tab_batch:
+
+    # File uploader
+    uploaded_file = st.file_uploader("📁 Upload CSV File (optional)", type=["csv"])
+
+    # Auto-load logic
+    if uploaded_file:
+        df_uploaded = pd.read_csv(uploaded_file)
+        source = "User-Uploaded Data File"
+    else:
+        df_uploaded = pd.read_csv(SAMPLE_CSV)
+        source = "Auto-Loaded Sample Data"
+
+    # Dynamic Titles
+    batch_title = f"📁 Batch Prediction ({source})"
+    preview_title = f"📄 Preview of {source}"
+
+    # Display Titles
+    st.subheader(batch_title)
+    st.write(f"### {preview_title}")
+
+    # Show dataframe
+    st.dataframe(df_uploaded.head())
+
+    # Required columns
+    required_columns = ["tenure", "MonthlyCharges", "Contract", "PaymentMethod"]
+    missing = [c for c in required_columns if c not in df_uploaded.columns]
+
+    if missing:
+        st.error(f"❌ Missing required columns in the dataset: {missing}")
+    else:
+        # Run prediction
+        from batch_predict import run_batch_prediction
+        with st.spinner("Running batch prediction..."):
+            results_batch = run_batch_prediction(df_uploaded)
+        st.success("✅ Batch prediction completed successfully!")
+
+        # Churn Rate
+        churn_rate_batch = results_batch["churn_prediction"].mean() * 100
+        st.metric("Predicted Churn Rate (Batch)", f"{churn_rate_batch:.1f}%")
+
+        # Top high-risk customers
+        st.subheader("Top Predicted High-Risk Customers")
+        st.dataframe(
+            results_batch.sort_values("churn_probability", ascending=False).head(20)
+        )
+
+        # Download button
+        st.download_button(
+            label="Download Full Batch Predictions (CSV)",
+            data=results_batch.to_csv(index=False).encode("utf-8"),
+            file_name="batch_churn_predictions.csv",
+            mime="text/csv",
+        )
+
+
+
+# ---------------------------------------
+# FOOTER
+# ---------------------------------------
+st.markdown(
+    """
+    <div class="footer">
+        Built y <b>Akeem Asiru</b><br>
+        Machine Learning Engineer • Data Scientist • AI Developer
+    </div>
+    """,
+    unsafe_allow_html=True,
+)

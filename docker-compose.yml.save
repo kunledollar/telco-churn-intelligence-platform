@@ -1,0 +1,371 @@
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: churn_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./dashboard:/app/dashboard
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    depends_on:
+      - api
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8501/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+networks:
+  churn_network:
+    driver: bridge
+version: "3.9"
+
+services:
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fastapi
+    container_name: churn_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./models:/app/models
+      - ./data:/app/data
+    restart: always
+    networks:
+      - churn_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/ || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: durl -
